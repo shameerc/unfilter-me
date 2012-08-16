@@ -12,11 +12,12 @@ class App extends unfiltered.filter.Plan {
   val logger = Logger(classOf[App])
 
   def intent = {
-    case req@GET(Path(p)) =>
+    case GET(Path(p)) =>
       logger.debug("GET %s" format p)
-      view(req, "body" -> "What say you?")
-    case req@POST(Path(p) & Params(params)) =>
+      Ok ~> view(Map.empty)(<p> What say you? </p>)
+    case POST(Path(p) & Params(params)) =>
       logger.debug("POST %s" format p)
+      val vw = view(params)_
       val expected = for {
         int <- lookup("int") is
           int { _ + " is not an integer" } is
@@ -26,20 +27,32 @@ class App extends unfiltered.filter.Plan {
           nonempty("Palindrome is empty") is
           pred(palindrome, { _ + " is not a palindrome" }) is
           required("missing palindrome")
-      } yield view(
-        req,
-        "body" -> "Yup. %d is an integer and %s is a palindrome".format(
-          int.get, word.get
-        )
-      )
+      } yield vw(<p>Yup. { int.get } is an integer and { word.get } is a palindrome. </p>)
       expected(params) orFail { fails =>
-        view(req, "errors" -> fails.map { f => Map("error" -> f.error) })
+        vw(<ul> { fails.map { f => <li>{f.error} </li> } } </ul>)
       }
   }
   def palindrome(s: String) = s.toLowerCase.reverse == s.toLowerCase
-  def view[T](req: HttpRequest[T], extra: (String, Any)*) = {
-    val Params(params) = req
-    Scalate(req, "palindrome.mustache", (params.toSeq ++ extra): _*)
+  def view(params: Map[String, Seq[String]])(body: scala.xml.NodeSeq) = {
+    def p(k: String) = params.get(k).flatMap { _.headOption } getOrElse("")
+    Html(
+     <html>
+      <head>
+        <title>uf example</title>
+        <link rel="stylesheet" type="text/css" href="/assets/css/app.css"/>
+      </head>
+      <body>
+       <div id="container">
+       { body }
+       <form method="POST">
+         <div>Integer <input type="text" name="int" value={ p("int") } /></div>
+         <div>Palindrome <input type="text" name="palindrome" value={ p("palindrome") } /></div>
+         <input type="submit" />
+       </form>
+       </div>
+     </body>
+    </html>
+   )
   }
 }
 
