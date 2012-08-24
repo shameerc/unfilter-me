@@ -2,11 +2,11 @@ import com.twitter.sbt._
 
 seq(StandardProject.newSettings: _*)
  
-packageDistZipName := "cf-unfiltered-sample.zip"
+packageDistZipName := "af-unfiltered-sample.zip"
 
 organization := "com.example"
 
-name := "unfilter-me"
+name := "scala-unfilter"
 
 version := "0.1.0"
 

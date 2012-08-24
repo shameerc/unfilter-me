@@ -6,7 +6,8 @@ log
 # sbt specific
 dist/*
 target/
-project
+project/target
+project/project
 project/boot/
 project/plugins/project/
 
